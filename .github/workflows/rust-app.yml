@@ -5,6 +5,9 @@
 #       uses: Nullware-Inc/.github/.github/workflows/rust-app.yml@main
 #
 # yt-dlp is downloaded at build time by build.rs and embedded in the binary.
+# The built-in player loads libmpv at runtime: Windows zips ship
+# libmpv-2.dll (latest shinchiro/mpv-winbuild-cmake build) next to the exe;
+# Linux and macOS use the system libmpv (falling back to an external mpv).
 name: Rust app
 
 on:
@@ -45,7 +48,18 @@ jobs:
 
       - run: cargo fmt --check
       - run: cargo clippy --release -- -D warnings
+      - run: cargo test --release
       - run: cargo build --release
+
+      - name: Bundle libmpv (Windows)
+        if: matrix.name == 'windows'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download -R shinchiro/mpv-winbuild-cmake -p "mpv-dev-x86_64-2*.7z" -D "$RUNNER_TEMP/mpv"
+          7z e -y -o"target/release" "$RUNNER_TEMP"/mpv/*.7z libmpv-2.dll
+          ls -la target/release/libmpv-2.dll
 
       - name: Package
         shell: bash
@@ -53,7 +67,7 @@ jobs:
           mkdir dist
           name="NullYT-Rust-${{ matrix.name }}-${GITHUB_REF_NAME//\//-}"
           if [ "${{ matrix.name }}" = windows ]; then
-            7z a "dist/$name.zip" ./target/release/${{ matrix.bin }}
+            7z a "dist/$name.zip" ./target/release/${{ matrix.bin }} ./target/release/libmpv-2.dll
           else
             tar -C target/release -czf "dist/$name.tar.gz" ${{ matrix.bin }}
           fi
