@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest an idea or a new customisation option
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do?
+      description: Describe the problem or wish, not just the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How could it work?
+  - type: checkboxes
+    id: apps
+    attributes:
+      label: Which apps does this apply to?
+      options:
+        - label: Desktop (Flutter)
+        - label: Android
+        - label: Desktop (Rust)

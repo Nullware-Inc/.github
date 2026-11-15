@@ -1,0 +1,105 @@
+# Reusable: build a Null YT Flutter shell (desktop or Android).
+#
+# Call it from an app repo:
+#
+#   jobs:
+#     windows:
+#       uses: Nullware-Inc/.github/.github/workflows/flutter-app.yml@main
+#       with: { platform: windows }
+#
+# On a tag push (v*) the build is attached to that GitHub release.
+name: Flutter app
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        description: windows | linux | macos | android
+        type: string
+        required: true
+      core-ref:
+        description: Branch/tag of Null-YT-Core-Dart to build against
+        type: string
+        default: main
+      flutter-version:
+        type: string
+        default: ""   # empty = latest stable
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ inputs.platform == 'windows' && 'windows-latest' || inputs.platform == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
+    steps:
+      # The apps reference the core as ../Null-YT-Core-Dart, so lay them out side by side.
+      - uses: actions/checkout@v5
+        with:
+          path: app
+      - uses: actions/checkout@v5
+        with:
+          repository: Nullware-Inc/Null-YT-Core-Dart
+          ref: ${{ inputs.core-ref }}
+          path: Null-YT-Core-Dart
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ inputs.flutter-version }}
+          cache: true
+
+      - name: Linux build dependencies
+        if: inputs.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev libmpv-dev mpv libwebkit2gtk-4.1-dev
+
+      - uses: actions/setup-java@v4
+        if: inputs.platform == 'android'
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Test core
+        working-directory: Null-YT-Core-Dart
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+
+      - name: Build
+        working-directory: app
+        shell: bash
+        run: |
+          flutter pub get
+          case "${{ inputs.platform }}" in
+            android) flutter build apk --release --split-per-abi ;;
+            *)       flutter build ${{ inputs.platform }} --release ;;
+          esac
+
+      - name: Package
+        working-directory: app
+        shell: bash
+        run: |
+          mkdir -p ../dist
+          name="NullYT-${{ inputs.platform }}-${GITHUB_REF_NAME//\//-}"
+          case "${{ inputs.platform }}" in
+            windows) 7z a "../dist/$name.zip" ./build/windows/x64/runner/Release/* ;;
+            linux)   tar -C build/linux/x64/release/bundle -czf "../dist/$name.tar.gz" . ;;
+            macos)   ditto -c -k --keepParent build/macos/Build/Products/Release/*.app "../dist/$name.zip" ;;
+            android) for f in build/app/outputs/flutter-apk/app-*-release.apk; do
+                       abi=$(basename "$f" | sed 's/app-\(.*\)-release.apk/\1/')
+                       cp "$f" "../dist/$name-$abi.apk"
+                     done ;;
+          esac
+          ls -la ../dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nullyt-${{ inputs.platform }}
+          path: dist/*
+
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: dist/*

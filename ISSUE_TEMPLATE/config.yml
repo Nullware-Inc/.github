@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security issue
+    url: https://github.com/Nullware-Inc/.github/blob/main/SECURITY.md
+    about: Report vulnerabilities privately. Please don't open a public issue.
+  - name: Video won't load / "Sign in to confirm you're not a bot"
+    url: https://github.com/yt-dlp/yt-dlp/issues
+    about: This usually means YouTube changed something. Update yt-dlp first (Settings → Engine → Update now).

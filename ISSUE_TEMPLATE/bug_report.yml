@@ -1,0 +1,55 @@
+name: Bug report
+description: Something is broken
+labels: [bug]
+body:
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which app?
+      options:
+        - Desktop (Flutter)
+        - Android
+        - Desktop (Rust)
+        - Website
+        - Installer
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version and yt-dlp version
+      description: You'll find both in Settings → Engine.
+      placeholder: "0.1.0, yt-dlp 2026.10.26"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: Windows 11 24H2 / Android 15 / Ubuntu 26.04
+    validations:
+      required: true
+  - type: dropdown
+    id: signed-in
+    attributes:
+      label: Were you signed in?
+      options: ["No", "Yes – Google sign-in", "Yes – browser session", "Yes – cookies.txt"]
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Click …
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error message or logs
+      description: Remove any cookies or tokens before you paste.
+      render: text
