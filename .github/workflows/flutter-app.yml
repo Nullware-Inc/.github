@@ -34,7 +34,9 @@ permissions:
 
 jobs:
   build:
-    runs-on: ${{ inputs.platform == 'windows' && 'windows-latest' || inputs.platform == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
+    # Linux builds on 24.04: it ships the WPE WebKit dev packages (26.04 doesn't)
+    # and its older glibc lets the packages run on more distros.
+    runs-on: ${{ inputs.platform == 'windows' && 'windows-latest' || inputs.platform == 'macos' && 'macos-latest' || inputs.platform == 'linux' && 'ubuntu-24.04' || 'ubuntu-latest' }}
     steps:
       # The apps reference the core as ../Null-YT-Core-Dart, so lay them out side by side.
       - uses: actions/checkout@v5
