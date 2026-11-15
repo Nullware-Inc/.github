@@ -56,8 +56,16 @@ jobs:
         if: inputs.platform == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libgtk-3-dev libmpv-dev mpv libwebkit2gtk-4.1-dev \
+          sudo apt-get install -y ninja-build libgtk-3-dev libmpv-dev mpv \
             libsoup-3.0-dev libsecret-1-dev rpm libarchive-tools zstd ruby ruby-dev
+          # flutter_inappwebview's Linux backend is WPE WebKit; take the newest the distro has.
+          for v in 2.0 1.1 1.0; do
+            if apt-cache show "libwpewebkit-$v-dev" >/dev/null 2>&1; then
+              sudo apt-get install -y "libwpewebkit-$v-dev" && break
+            fi
+          done
+          sudo apt-get install -y libwpe-1.0-dev || true
+          sudo apt-get install -y libwpebackend-fdo-1.0-dev || true
           sudo gem install --no-document fpm
 
       - uses: actions/setup-java@v4
